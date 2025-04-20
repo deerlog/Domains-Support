@@ -23,3 +23,7 @@ CREATE TABLE IF NOT EXISTS alertcfg (
     days INTEGER NOT NULL DEFAULT 30,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 ); 
+
+--v1.0.2 更新sql,需到cf上的domains-db的控制台上运行
+ALTER TABLE domains ADD COLUMN st_tgsend INTEGER DEFAULT 1;
+update domains set st_tgsend = 1 where st_tgsend is null;

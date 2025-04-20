@@ -10,6 +10,7 @@ interface Domain {
     domain: string
     expiry_date: string
     tgsend: number
+    st_tgsend: number
 }
 
 export const onRequestPost: PagesFunction<Env> = async (context) => {
@@ -54,7 +55,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
         // 获取所有域名
         const { results: domains } = await context.env.DB.prepare(
-            'SELECT domain, expiry_date, tgsend FROM domains WHERE tgsend = 1'
+            'SELECT domain, expiry_date, tgsend, st_tgsend FROM domains WHERE tgsend = 1 or st_tgsend = 1'
         ).all<Domain>()
 
         console.log(`找到 ${domains.length} 个启用通知的域名`)
@@ -133,7 +134,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
             ).bind(newStatus, domain.domain).run()
 
             // 如果状态变为离线且启用了通知，发送 Telegram 消息
-            if (newStatus === '离线') {
+            if (newStatus === '离线' && domain.st_tgsend === 1) {
                 const message = `*🔔 Domains-Support 通知*\n\n` +
                     `⚠️ *域名服务离线告警*\n\n` +
                     `🌐 域名：\`${domain.domain}\`\n` +
@@ -150,7 +151,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
             }
 
             // 检查域名是否即将过期
-            if (remainingDays <= config.days) {
+            if (remainingDays <= config.days && domain.tgsend === 1) {
                 console.log(`域名 ${domain.domain} 需要发送过期通知：剩余天数(${remainingDays}) <= 阈值(${config.days})`)
                 const message = `*🔔 Domains-Support通知*\n\n` +
                     `🌐 域名：\`${domain.domain}\`\n` +

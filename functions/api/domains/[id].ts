@@ -31,6 +31,7 @@ export const onRequestPut: PagesFunction<Env> = async (context) => {
                 service_type = ?,
                 status = ?,
                 tgsend = ?,
+                st_tgsend = ?,
                 memo = ?
             WHERE id = ?
             RETURNING *
@@ -43,6 +44,7 @@ export const onRequestPut: PagesFunction<Env> = async (context) => {
             data.service_type,
             data.status,
             data.tgsend || 0,
+            data.st_tgsend ?? 1,
             data.memo || '',
             id
         ).run<Domain>()

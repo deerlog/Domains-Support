@@ -38,6 +38,10 @@
                 <el-switch v-model="form.tgsend" :active-value="1" :inactive-value="0" inline-prompt active-text="开启"
                     inactive-text="关闭" id="tgsend-input" autocomplete="off" />
             </el-form-item>
+            <el-form-item label="状态通知">
+                <el-switch v-model="form.st_tgsend" :active-value="1" :inactive-value="0" inline-prompt active-text="开启"
+                    inactive-text="关闭" id="st-tgsend-input" autocomplete="off" />
+            </el-form-item>
             <el-form-item label="备注" prop="memo">
                 <el-input v-model="form.memo" type="textarea" :rows="3" placeholder="请输入备注" id="memo-input"
                     autocomplete="off" clearable />
@@ -65,6 +69,7 @@ interface DomainForm {
     service_type: string
     status: string
     tgsend: number
+    st_tgsend: number
     memo: string
 }
 
@@ -89,6 +94,7 @@ const defaultForm: DomainForm = {
     service_type: '伪装网站',
     status: '在线',
     tgsend: 0,
+    st_tgsend: 1,
     memo: ''
 }
 

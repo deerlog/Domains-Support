@@ -10,6 +10,7 @@ export interface DomainData {
     service_type: string
     status: string
     tgsend: number
+    st_tgsend: number
     memo: string
     created_at?: string
 }

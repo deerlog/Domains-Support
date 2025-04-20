@@ -58,8 +58,8 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         const result = await context.env.DB.prepare(`
             INSERT INTO domains (
                 domain, registrar, registrar_link, registrar_date,
-                expiry_date, service_type, status, tgsend, memo
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                expiry_date, service_type, status, tgsend, st_tgsend, memo
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             RETURNING *
         `).bind(
             data.domain,
@@ -70,6 +70,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
             data.service_type,
             data.status,
             data.tgsend || 0,
+            data.st_tgsend ?? 1,
             data.memo || ''
         ).run<Domain>()
 
