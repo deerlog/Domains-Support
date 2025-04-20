@@ -15,34 +15,35 @@
         </div>
 
         <el-table :data="domains" border style="width: 100%" class="custom-table">
-            <el-table-column label="域名" align="center">
+            <el-table-column label="域名" align="center" sortable>
                 <template #default="scope">
                     <a :href="'https://' + scope.row.domain" target="_blank" class="link">{{ scope.row.domain }}</a>
                 </template>
             </el-table-column>
-            <el-table-column label="域名商" align="center">
+            <el-table-column label="域名商" align="center" sortable prop="registrar">
                 <template #default="scope">
                     <a :href="scope.row.registrar_link" target="_blank" class="link">{{ scope.row.registrar }}</a>
                 </template>
             </el-table-column>
-            <el-table-column prop="registrar_date" label="注册时间" align="center" />
-            <el-table-column prop="expiry_date" label="过期时间" align="center" />
-            <el-table-column label="剩余时间" align="center">
+            <el-table-column prop="registrar_date" label="注册时间" align="center" sortable />
+            <el-table-column prop="expiry_date" label="过期时间" align="center" sortable />
+            <el-table-column label="剩余时间" align="center" sortable
+                :sort-method="(a, b) => calculateRemainingDays(a.expiry_date) - calculateRemainingDays(b.expiry_date)">
                 <template #default="scope">
                     <span :class="{ 'warning-text': calculateRemainingDays(scope.row.expiry_date) <= alertDays }">
                         {{ calculateRemainingDays(scope.row.expiry_date) }}天
                     </span>
                 </template>
             </el-table-column>
-            <el-table-column prop="service_type" label="服务类型" align="center" />
-            <el-table-column prop="status" label="状态" align="center">
+            <el-table-column prop="service_type" label="服务类型" align="center" sortable />
+            <el-table-column prop="status" label="状态" align="center" sortable>
                 <template #default="scope">
                     <span :class="scope.row.status === '在线' ? 'success-text' : 'danger-text'">
                         {{ scope.row.status }}
                     </span>
                 </template>
             </el-table-column>
-            <el-table-column prop="memo" label="备注" align="center" />
+            <el-table-column prop="memo" label="备注" align="center" sortable />
             <el-table-column label="操作" width="200" align="center">
                 <template #default="scope">
                     <el-button type="primary" size="small" :icon="Edit" @click="handleEdit(scope.row)">修改</el-button>
@@ -59,7 +60,7 @@
         <footer class="footer">
             <div class="footer-content">
                 <div class="copyright">
-                    <span>© 2025 Domains-Support v1.0.2</span>
+                    <span>© 2025 Domains-Support v1.0.3</span>
                     <span class="separator">|</span>
                     <span>作者：饭奇骏</span>
                     <span class="separator">|</span>
@@ -481,7 +482,7 @@ onMounted(() => {
 .header-buttons {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 3px;
 }
 
 .custom-table {
@@ -813,5 +814,12 @@ onMounted(() => {
 .dark .el-select {
     --el-select-border-color-hover: #505050;
     --el-select-input-focus-border-color: #505050;
+}
+
+.el-button.el-button--small {
+    padding: 6px 12px;
+    /* 默认是 8px 15px */
+    font-size: 12px;
+    /* 默认是 13px */
 }
 </style>
