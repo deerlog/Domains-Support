@@ -90,10 +90,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
                 try {
                     const response = await Promise.race([httpFetchPromise, timeoutPromise])
                     if (response instanceof Response) {
-                        const contentType = response.headers.get('content-type')
-                        const contentLength = response.headers.get('content-length')
-                        if ((response.status >= 200 && response.status < 400) &&
-                            (contentType || contentLength)) {
+                        if (response.status >= 200 && response.status < 500) {
                             isOnline = true
                         }
                     }
@@ -112,10 +109,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
                     try {
                         const response = await Promise.race([httpsFetchPromise, timeoutPromise])
                         if (response instanceof Response) {
-                            const contentType = response.headers.get('content-type')
-                            const contentLength = response.headers.get('content-length')
-                            if ((response.status >= 200 && response.status < 400) &&
-                                (contentLength || contentType)) {
+                            if (response.status >= 200 && response.status < 500) {
                                 isOnline = true
                             }
                         }
