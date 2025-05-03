@@ -3,14 +3,43 @@
         <div class="header">
             <h2>域名管理系统(Domains-Support)</h2>
             <div class="header-buttons">
-                <el-button type="primary" size="small" :icon="Plus" @click="handleAdd">新建</el-button>
                 <el-button type="primary" size="small" :icon="Refresh" :loading="refreshing"
                     @click="handleRefresh">刷新</el-button>
-                <el-button type="primary" size="small" :icon="Setting" @click="handleConfig">配置</el-button>
-                <el-button type="primary" size="small" :icon="SwitchButton" @click="handleLogout">登出</el-button>
-                <el-button type="primary" size="small" :icon="isDarkMode ? Sunny : Moon" @click="toggleDarkMode">
-                    {{ isDarkMode ? '日间模式' : '夜间模式' }}
-                </el-button>
+                <el-dropdown trigger="click">
+                    <el-button type="primary" size="small">
+                        系统
+                        <el-icon class="el-icon--right"><arrow-down /></el-icon>
+                    </el-button>
+                    <template #dropdown>
+                        <el-dropdown-menu>
+                            <el-dropdown-item @click="handleAdd">
+                                <el-icon>
+                                    <Plus />
+                                </el-icon>新增
+                            </el-dropdown-item>
+                            <el-dropdown-item @click="handleConfig">
+                                <el-icon>
+                                    <Setting />
+                                </el-icon>配置
+                            </el-dropdown-item>
+                            <el-dropdown-item @click="handleImport">
+                                <el-icon>
+                                    <Upload />
+                                </el-icon>导入
+                            </el-dropdown-item>
+                            <el-dropdown-item @click="handleExport">
+                                <el-icon>
+                                    <Download />
+                                </el-icon>导出
+                            </el-dropdown-item>
+                        </el-dropdown-menu>
+                    </template>
+                </el-dropdown>
+                <el-tooltip content="登出系统" placement="bottom">
+                    <el-button type="primary" size="small" :icon="SwitchButton" @click="handleLogout">登出</el-button>
+                </el-tooltip>
+                <el-switch v-model="isDarkMode" :active-icon="Moon" :inactive-icon="Sunny" @change="toggleDarkMode"
+                    inline-prompt class="theme-switch" />
             </div>
         </div>
 
@@ -57,10 +86,12 @@
 
         <AlertConfigDialog v-model:visible="configVisible" :config="alertConfig" @submit="handleConfigSubmit" />
 
+        <ImportDialog v-model:visible="importVisible" @success="loadDomains" />
+
         <footer class="footer">
             <div class="footer-content">
                 <div class="copyright">
-                    <span>© 2025 Domains-Support v1.0.3</span>
+                    <span>© 2025 Domains-Support v1.0.5</span>
                     <span class="separator">|</span>
                     <span>作者：饭奇骏</span>
                     <span class="separator">|</span>
@@ -90,10 +121,11 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Setting, Refresh, Plus, Edit, Delete, SwitchButton, Sunny, Moon } from '@element-plus/icons-vue'
+import { Setting, Refresh, Plus, Edit, Delete, SwitchButton, Sunny, Moon, ArrowDown, Upload, Download } from '@element-plus/icons-vue'
 import { useAuth } from '../utils/auth'
 import DomainDialog from '../components/DomainDialog.vue'
 import AlertConfigDialog from '../components/AlertConfigDialog.vue'
+import ImportDialog from '../components/ImportDialog.vue'
 import { createDomain, updateDomain, deleteDomain, type DomainData } from '../api/domains'
 
 type Domain = DomainData
@@ -122,6 +154,7 @@ const dialogVisible = ref(false)
 const configVisible = ref(false)
 const isEdit = ref(false)
 const editData = ref<Domain>()
+const importVisible = ref(false)
 
 // 暗黑模式状态
 const isDarkMode = ref(localStorage.getItem('darkMode') === 'true')
@@ -416,9 +449,61 @@ const loadAlertConfig = async () => {
     }
 }
 
+const handleImport = () => {
+    importVisible.value = true
+}
+
+const handleExport = async () => {
+    try {
+        const authData = auth.getAuthToken()
+        if (!authData) {
+            throw new Error('未登录或登录已过期')
+        }
+
+        // 显示加载提示
+        const loading = ElMessage.info({
+            message: '正在准备导出数据...',
+            duration: 0
+        })
+
+        // 直接使用浏览器下载功能
+        const response = await fetch('/api/domains/export', {
+            headers: {
+                'Authorization': `Bearer ${authData.token}`
+            }
+        })
+
+        // 关闭加载提示
+        loading.close()
+
+        if (!response.ok) {
+            const errorData = await response.json() as ApiResponse<null>
+            throw new Error(errorData.message || '导出失败')
+        }
+
+        // 获取文件名
+        const filename = response.headers.get('Content-Disposition')?.split('filename=')[1]?.replace(/"/g, '') || `domains-export-${new Date().toISOString().split('T')[0]}.json`
+
+        // 创建 Blob 并下载
+        const blob = await response.blob()
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = filename
+        document.body.appendChild(a)
+        a.click()
+        window.URL.revokeObjectURL(url)
+        document.body.removeChild(a)
+
+        ElMessage.success('导出成功')
+    } catch (error) {
+        console.error('导出失败:', error)
+        ElMessage.error(error instanceof Error ? error.message : '导出失败')
+    }
+}
+
 // 切换暗黑模式
 const toggleDarkMode = () => {
-    isDarkMode.value = !isDarkMode.value
     localStorage.setItem('darkMode', isDarkMode.value.toString())
     document.documentElement.classList.toggle('dark', isDarkMode.value)
 }
@@ -482,7 +567,12 @@ onMounted(() => {
 .header-buttons {
     display: flex;
     flex-wrap: wrap;
-    gap: 3px;
+    gap: 10px;
+    align-items: center;
+}
+
+.theme-switch {
+    margin-left: 4px;
 }
 
 .custom-table {

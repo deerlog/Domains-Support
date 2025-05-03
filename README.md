@@ -12,13 +12,52 @@
 
 ## 功能特点
 
-- 域名管理：添加、编辑、删除域名信息
+- 域名管理：添加、编辑、删除、导入、导出域名信息
 - 状态监控：自动检查域名在线状态
 - 到期提醒：设置域名到期提醒时间
 - 多注册商支持：支持多个域名注册商的信息记录
 - Telegram 通知：支持通过 Telegram 发送到期提醒
 - 响应式设计：支持移动端和桌面端访问
 - 安全认证：基于用户名密码的访问控制
+
+## 批量导入说明
+
+系统支持通过JSON文件批量导入域名数据。导入格式如下：
+
+```json
+[
+  {
+    "domain": "example.com",
+    "registrar": "Cloudflare",
+    "registrar_link": "https://dash.cloudflare.com",
+    "registrar_date": "2023-01-01",
+    "expiry_date": "2024-01-01",
+    "service_type": "网站",
+    "memo": "主站"
+  },
+  {
+    "domain": "example.org",
+    "registrar": "Namecheap",
+    "registrar_link": "https://www.namecheap.com",
+    "registrar_date": "2023-02-15",
+    "expiry_date": "2024-02-15",
+    "service_type": "API服务",
+    "memo": "API文档站点"
+  }
+]
+```
+
+### 导入字段说明
+
+- `domain`：域名（必填）
+- `registrar`：注册商名称
+- `registrar_link`：注册商管理链接
+- `registrar_date`：注册日期，格式为YYYY-MM-DD
+- `expiry_date`：到期日期，格式为YYYY-MM-DD
+- `service_type`：服务类型
+- `memo`：备注信息
+
+导入时，系统会自动验证数据格式，并给出成功和失败的详细信息。
 
 ## 快速开始
 
