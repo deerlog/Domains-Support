@@ -65,60 +65,65 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
             const remainingDays = calculateRemainingDays(domain.expiry_date)
             console.log(`检查域名 ${domain.domain}: 过期时间 ${domain.expiry_date}, 剩余天数 ${remainingDays}`)
 
-            // 检查网站连通性
+            // 检查网站连通性，最多重试3次
             let isOnline = false
-            try {
-                const controller = new AbortController()
-                const timeoutPromise = new Promise<Response>((_, reject) => {
-                    setTimeout(() => {
-                        controller.abort()
-                        reject(new Error('Timeout'))
-                    }, 5000)
-                })
-
-                // 先尝试 HTTP 协议
-                const httpFetchPromise = fetch(`http://${domain.domain}`, {
-                    method: 'GET',
-                    redirect: 'follow',
-                    signal: controller.signal,
-                    headers: {
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                        'Accept': '*/*'
-                    }
-                })
-
+            for (let attempt = 1; attempt <= 3; attempt++) {
                 try {
-                    const response = await Promise.race([httpFetchPromise, timeoutPromise])
-                    if (response instanceof Response) {
-                        if (response.status >= 200 && response.status < 500) {
-                            isOnline = true
-                        }
-                    }
-                } catch (httpError) {
-                    console.error(`HTTP 检查域名 ${domain.domain} 失败:`, httpError)
-                    // 如果 HTTP 失败，尝试 HTTPS
-                    const httpsFetchPromise = fetch(`https://${domain.domain}`, {
+                    const controller = new AbortController()
+                    const timeoutPromise = new Promise<Response>((_, reject) => {
+                        setTimeout(() => {
+                            controller.abort()
+                            reject(new Error('Timeout'))
+                        }, 5000)
+                    })
+
+                    // 先尝试 HTTP 协议
+                    const httpFetchPromise = fetch(`http://${domain.domain}`, {
                         method: 'GET',
                         redirect: 'follow',
                         signal: controller.signal,
                         headers: {
                             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                            'Accept': '*/*'
                         }
                     })
 
                     try {
-                        const response = await Promise.race([httpsFetchPromise, timeoutPromise])
+                        const response = await Promise.race([httpFetchPromise, timeoutPromise])
                         if (response instanceof Response) {
                             if (response.status >= 200 && response.status < 500) {
                                 isOnline = true
+                                break // 成功则退出重试循环
                             }
                         }
-                    } catch (httpsError) {
-                        console.error(`HTTPS 检查域名 ${domain.domain} 失败:`, httpsError)
+                    } catch (httpError) {
+                        console.error(`HTTP 检查域名 ${domain.domain} 失败（第${attempt}次）:`, httpError)
+                        // 如果 HTTP 失败，尝试 HTTPS
+                        const httpsFetchPromise = fetch(`https://${domain.domain}`, {
+                            method: 'GET',
+                            redirect: 'follow',
+                            signal: controller.signal,
+                            headers: {
+                                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                            }
+                        })
+
+                        try {
+                            const response = await Promise.race([httpsFetchPromise, timeoutPromise])
+                            if (response instanceof Response) {
+                                if (response.status >= 200 && response.status < 500) {
+                                    isOnline = true
+                                    break // 成功则退出重试循环
+                                }
+                            }
+                        } catch (httpsError) {
+                            console.error(`HTTPS 检查域名 ${domain.domain} 失败（第${attempt}次）:`, httpsError)
+                        }
                     }
+                } catch (error) {
+                    console.error(`检查域名 ${domain.domain} 失败（第${attempt}次）:`, error)
                 }
-            } catch (error) {
-                console.error(`检查域名 ${domain.domain} 失败:`, error)
+                // 如果本次未成功，自动进入下一次重试
             }
 
             // 更新域名状态
