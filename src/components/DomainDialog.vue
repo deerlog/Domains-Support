@@ -34,11 +34,11 @@
                     <el-option label="离线" value="离线" />
                 </el-select>
             </el-form-item>
-            <el-form-item label="TG通知">
+            <el-form-item label="到期通知">
                 <el-switch v-model="form.tgsend" :active-value="1" :inactive-value="0" inline-prompt active-text="开启"
                     inactive-text="关闭" id="tgsend-input" autocomplete="off" />
             </el-form-item>
-            <el-form-item label="状态通知">
+            <el-form-item label="域名离线通知">
                 <el-switch v-model="form.st_tgsend" :active-value="1" :inactive-value="0" inline-prompt active-text="开启"
                     inactive-text="关闭" id="st-tgsend-input" autocomplete="off" />
             </el-form-item>
@@ -57,8 +57,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, defineProps, defineEmits, watch } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
+import { defineEmits, defineProps, ref, watch } from 'vue'
 
 interface DomainForm {
     domain: string

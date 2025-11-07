@@ -3,6 +3,8 @@ import type { Env } from '../../types'
 interface AlertConfig {
     tg_token: string
     tg_userid: string
+    wx_api: string
+    wx_token: string
     days: number
 }
 
@@ -132,7 +134,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
                 'UPDATE domains SET status = ? WHERE domain = ?'
             ).bind(newStatus, domain.domain).run()
 
-            // 如果状态变为离线且启用了通知，发送 Telegram 消息
+            // 如果状态变为离线且启用了通知，发送通知
             if (newStatus === '离线' && domain.st_tgsend === 1) {
                 const message = `*🔔 Domains-Support 通知*\n\n` +
                     `⚠️ *域名服务离线告警*\n\n` +
@@ -142,8 +144,14 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
                     `🔍 请检查网站服务状态！`
 
                 try {
-                    await sendTelegramMessage(config.tg_token, config.tg_userid, message)
-                    console.log(`成功发送离线通知：${domain.domain}`)
+                    if (config.tg_token && config.tg_userid) {
+                        await sendTelegramMessage(config.tg_token, config.tg_userid, message)
+                        console.log(`成功发送离线通知 (Telegram)：${domain.domain}`)
+                    }
+                    if (config.wx_api && config.wx_token) {
+                        await sendWeChatMessage(config.wx_api, config.wx_token, '来自Domain-Support通知', message)
+                        console.log(`成功发送离线通知 (WeChat)：${domain.domain}`)
+                    }
                 } catch (error) {
                     console.error(`发送离线通知失败:`, error)
                 }
@@ -160,8 +168,14 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
                 try {
                     console.log('准备发送过期通知...')
-                    await sendTelegramMessage(config.tg_token, config.tg_userid, message)
-                    console.log(`成功发送过期通知：${domain.domain}`)
+                    if (config.tg_token && config.tg_userid) {
+                        await sendTelegramMessage(config.tg_token, config.tg_userid, message)
+                        console.log(`成功发送过期通知 (Telegram)：${domain.domain}`)
+                    }
+                    if (config.wx_api && config.wx_token) {
+                        await sendWeChatMessage(config.wx_api, config.wx_token, '来自Domain-Support通知', message)
+                        console.log(`成功发送过期通知 (WeChat)：${domain.domain}`)
+                    }
                     notifiedDomains.push({
                         domain: domain.domain,
                         remainingDays,
@@ -232,4 +246,34 @@ async function sendTelegramMessage(token: string, chatId: string, message: strin
     }
 
     console.log('Telegram API 响应:', responseData)
+}
+
+async function sendWeChatMessage(apiUrl: string, token: string, title: string, text: string): Promise<void> {
+    if (!apiUrl || !token) {
+        console.log('WeChat API URL 或 token 未配置，跳过发送');
+        return;
+    }
+
+    console.log('准备发送 WeChat 消息:', { url: apiUrl, title, textLength: text.length });
+    const body = `title=${encodeURIComponent(title)}&content=${encodeURIComponent(text)}&token=${encodeURIComponent(token)}`;
+
+    try {
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: body,
+        });
+
+        const responseData = await response.json();
+
+        if (!response.ok) {
+            console.error('WeChat API 响应错误:', responseData);
+        } else {
+            console.log('WeChat API 响应:', responseData);
+        }
+    } catch (error) {
+        console.error('发送 WeChat 消息失败:', error);
+    }
 } 

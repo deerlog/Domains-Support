@@ -4,6 +4,8 @@ import { checkAuth } from '../../utils/auth'
 interface AlertConfig {
     tg_token: string
     tg_userid: string
+    wx_api: string
+    wx_token: string
     days: number
 }
 
@@ -39,15 +41,12 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         const data = await context.request.json() as AlertConfig
 
         // 验证必填字段
-        const requiredFields = ['tg_token', 'tg_userid', 'days'] as const
-        for (const field of requiredFields) {
-            if (!data[field]) {
-                return Response.json({
-                    status: 400,
-                    message: `${field} 是必填字段`,
-                    data: null
-                }, { status: 400 })
-            }
+        if (!data.days) {
+            return Response.json({
+                status: 400,
+                message: `days 是必填字段`,
+                data: null
+            }, { status: 400 })
         }
 
         // 检查是否已存在配置
@@ -59,25 +58,29 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         if (results.length > 0) {
             // 更新现有记录
             result = await context.env.DB.prepare(`
-                UPDATE alertcfg 
-                SET tg_token = ?, tg_userid = ?, days = ?
+                UPDATE alertcfg
+                SET tg_token = ?, tg_userid = ?, wx_api = ?, wx_token = ?, days = ?
                 WHERE id = ?
                 RETURNING *
             `).bind(
                 data.tg_token,
                 data.tg_userid,
+                data.wx_api,
+                data.wx_token,
                 data.days,
                 results[0].id
             ).run<AlertConfig>()
         } else {
             // 插入新记录
             result = await context.env.DB.prepare(`
-                INSERT INTO alertcfg (tg_token, tg_userid, days)
-                VALUES (?, ?, ?)
+                INSERT INTO alertcfg (tg_token, tg_userid, wx_api, wx_token, days)
+                VALUES (?, ?, ?, ?, ?)
                 RETURNING *
             `).bind(
                 data.tg_token,
                 data.tg_userid,
+                data.wx_api,
+                data.wx_token,
                 data.days
             ).run<AlertConfig>()
         }

@@ -133,6 +133,8 @@ type Domain = DomainData
 interface AlertConfig {
     tg_token: string
     tg_userid: string
+    wx_api: string
+    wx_token: string
     days: number
 }
 
