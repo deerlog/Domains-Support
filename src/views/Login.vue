@@ -91,6 +91,26 @@ const handleLogin = async () => {
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
 }
 
+/* 弹出对话框圆角样式 */
+.el-dialog {
+    border-radius: 12px !important;
+    overflow: hidden;
+}
+
+.el-dialog__header {
+    border-radius: 12px 12px 0 0 !important;
+}
+
+.el-dialog__body {
+    border-radius: 0 0 12px 12px !important;
+}
+
+/* 背景模糊效果 */
+.el-overlay {
+    backdrop-filter: blur(5px) !important;
+    background-color: rgba(0, 0, 0, 0.5) !important;
+}
+
 .logo-container {
     display: flex;
     flex-direction: column;

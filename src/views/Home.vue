@@ -878,6 +878,26 @@ onMounted(() => {
     --el-dialog-title-font-color: #ffffff;
 }
 
+/* 弹出对话框圆角样式 */
+.el-dialog {
+    border-radius: 12px !important;
+    overflow: hidden;
+}
+
+.el-dialog__header {
+    border-radius: 12px 12px 0 0 !important;
+}
+
+.el-dialog__body {
+    border-radius: 0 0 12px 12px !important;
+}
+
+/* 背景模糊效果 */
+.el-overlay {
+    backdrop-filter: blur(5px) !important;
+    background-color: rgba(0, 0, 0, 0.5) !important;
+}
+
 .dark .el-card {
     --el-card-bg-color: #2d2d2d;
 }
